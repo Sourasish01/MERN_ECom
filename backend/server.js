@@ -84,6 +84,40 @@ app.post("/api/auth/signup", async (req, res) => {
 });
 
 
+app.post("/api/auth/login", async (req, res) => {
+    
+  const { email, password } = req.body;
+  try {
+    const user = await User.findOne({ email }); // check if user exists in the database. here User is the model/collection and findOne() is a method of the model
+
+    if (!user) {
+      return res.status(400).json({ message: "Invalid credentials" });
+    }
+
+    const isPasswordCorrect = await bcrypt.compare(password, user.password);
+    if (!isPasswordCorrect) {
+      return res.status(400).json({ message: "Invalid credentials" });
+    }
+
+    await generateToken(user._id, res);
+
+    return res.status(200).json({
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+    });
+  } 
+  catch (error) {
+    console.log("Error in login controller", error.message);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+
+
+});
+
+
+
 app.post("/api/auth/logout", async (req, res) => {
     
   try {
