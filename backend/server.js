@@ -1,10 +1,15 @@
 import express from 'express';
 import dotenv from 'dotenv';
-import User from "./models/user.model.js";
+import cookieParser from "cookie-parser";
 import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
+
+import User from "./models/user.model.js";
+
 
 import { connectDB } from "./lib/db.js";
 import { generateToken } from "./config/utils.js";
+import { redis } from "./lib/redis.js";
 
 
 dotenv.config(); // to access the .env file
@@ -14,6 +19,8 @@ const PORT = process.env.PORT; // to access the port from the .env file
 const app = express();
 
 app.use(express.json()); // to get hold of the JSON data from the body of the request
+
+app.use(cookieParser()); // to get hold of the cookies from the request
 
 
 
@@ -77,7 +84,26 @@ app.post("/api/auth/signup", async (req, res) => {
 });
 
 
+app.post("/api/auth/logout", async (req, res) => {
+    
+  try {
+		const refreshToken = req.cookies.refreshtoken123; // here we get the jwt refresh token value from the refreshtoken123 cookie in the request
+		if (refreshToken) {
+			const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET); // If a refresh token exists, it is verified using the secret key (REFRESH_TOKEN_SECRET).
+      //If the token is valid, jwt.verify returns the decoded payload, which typically contains user information such as userId.
+			await redis.del(`refresh_token:${decoded.userId}`);//The refresh token associated with the user's userId is deleted from Redis.
+      //This effectively logs the user out by invalidating the refresh token. This ensures that the refresh token cannot be used again to generate a new access token.
+		}
 
+		res.clearCookie("accesstoken123"); //Both accessToken and refreshToken cookies are cleared from the client.
+		res.clearCookie("refreshtoken123"); //Both accessToken and refreshToken cookies are cleared from the client.
+		res.json({ message: "Logged out successfully" }); //A success message is sent back to the client indicating a successful logout.
+	} catch (error) {
+		console.log("Error in logout controller", error.message);
+		res.status(500).json({ message: "Server error", error: error.message });
+	}
+
+});
 
 
 
