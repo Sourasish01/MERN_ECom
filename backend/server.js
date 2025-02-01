@@ -141,6 +141,53 @@ app.post("/api/auth/logout", async (req, res) => {
 
 
 
+app.post("/api/auth/refresh-accesstoken", async (req, res) => {
+
+  try {
+		const refreshToken = req.cookies.refreshtoken123; // here we get the jwt refresh token value from the refreshtoken123 cookie in the request
+
+		if (!refreshToken) {
+			return res.status(401).json({ message: "No refresh token provided" });
+		}
+
+		const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET); //// If a refresh token exists, it is verified using the secret key (REFRESH_TOKEN_SECRET).
+    //If the token is valid, jwt.verify returns the decoded payload, which typically contains user information such as userId.
+		const storedToken = await redis.get(`refresh_token:${decoded.userId}`);//The server fetches the refresh token stored in Redis.
+
+		if (storedToken !== refreshToken) { //If the refresh token in the request does not match the refresh token stored in Redis, an error is returned.
+			return res.status(401).json({ message: "Invalid refresh token" });
+		}
+
+		const accessToken = jwt.sign({ userId: decoded.userId }, process.env.ACCESS_TOKEN_SECRET, { //If the refresh token is valid, a new access token is generated.
+      expiresIn: "15m",
+    });
+
+		res.cookie("accesstoken123", accessToken, { //The new access token is sent back as a cookie.
+			httpOnly: true,
+			secure: process.env.NODE_ENV !== "development",
+			sameSite: "strict",
+			maxAge: 15 * 60 * 1000,
+		});
+
+		res.json({ message: "Token refreshed successfully" });
+	}
+  catch (error) {
+		console.log("Error in refreshToken controller", error.message);
+		res.status(500).json({ message: "Server error", error: error.message });
+	}
+});
+
+
+
+app.get("/api/auth/profile", async (req, res) => {
+  try {
+		res.json(req.user);
+	} catch (error) {
+		res.status(500).json({ message: "Server error", error: error.message });
+	}
+});
+
+
 app.listen(PORT, () => {
     console.log('Server is running on http://localhost:' + PORT);
     connectDB();
