@@ -5,11 +5,14 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
 import User from "./models/user.model.js";
+import Product from "./models/product.model.js";
+
 
 
 import { connectDB } from "./lib/db.js";
 import { generateToken } from "./config/utils.js";
 import { redis } from "./lib/redis.js";
+import { adminRoute, protectRoute } from "./middleware/auth.middleware.js";
 
 
 dotenv.config(); // to access the .env file
@@ -186,6 +189,22 @@ app.get("/api/auth/profile", async (req, res) => {
 		res.status(500).json({ message: "Server error", error: error.message });
 	}
 });
+
+
+// PRODUCT ROUTES
+
+
+app.get("/api/products/", protectRoute, adminRoute, async (req, res) =>{ //This route is used to fetch all products from the database.
+                                                                         // It only allows authenticated admin users to access the products.
+  try {
+		const products = await Product.find({}); // find all products
+		res.json({ products });
+	} catch (error) {
+		console.log("Error in getAllProducts controller", error.message);
+		res.status(500).json({ message: "Server error", error: error.message });
+	}
+});
+
 
 
 app.listen(PORT, () => {
