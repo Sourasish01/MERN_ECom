@@ -387,6 +387,106 @@ async function updateFeaturedProductsCache() { //This function is used to update
 };
 
 
+// CART ROUTES 
+
+app.post("/api/cart/", protectRoute, async (req, res) => { //This route is used to add a product to the cart of the authenticated user.
+  try {
+		const { productId } = req.body;
+		const user = req.user;
+
+		const existingItem = user.cartItems.find((item) => item.id === productId);
+		if (existingItem) {
+      existingItem.quantity += 1; // Increase quantity if the product is already in the cart
+    } else {
+      user.cartItems.push({ product: productId, quantity: 1 }); // Correct: adding both product ID and quantity
+    }
+
+		await user.save();
+
+		res.json(user.cartItems);
+
+	} catch (error) {
+		console.log("Error in addToCart controller", error.message);
+		res.status(500).json({ message: "Server error", error: error.message });
+	}
+});
+
+
+
+app.get("/api/cart/", protectRoute, async (req, res) => { //This route is used to fetch the cart of the authenticated user.
+  
+  try {
+		const products = await Product.find({ _id: { $in: req.user.cartItems } });
+
+		// add quantity for each product
+		const cartItems = products.map((product) => {
+			const item = req.user.cartItems.find((cartItem) => cartItem.id === product.id);
+			return { ...product.toJSON(), quantity: item.quantity };
+		});
+
+		res.json(cartItems);
+    
+	} catch (error) {
+		console.log("Error in getCartProducts controller", error.message);
+		res.status(500).json({ message: "Server error", error: error.message });
+	}
+
+});
+
+
+
+
+app.put("/api/cart/:id", protectRoute, async (req, res) => { //This route is used to update the existing quantity of cart product of the authenticated user.
+
+  try {
+		const { id: productId } = req.params;
+		const { quantity } = req.body;
+		const user = req.user;
+		const existingItem = user.cartItems.find((item) => item.id === productId);
+
+		if (existingItem) {
+			if (quantity === 0) {
+				user.cartItems = user.cartItems.filter((item) => item.id !== productId);
+				await user.save();
+				return res.json(user.cartItems);
+			}
+
+			existingItem.quantity = quantity;
+			await user.save();
+			res.json(user.cartItems);
+		} else {
+			res.status(404).json({ message: "Product not found" });
+		}
+	} catch (error) {
+		console.log("Error in updateQuantity controller", error.message);
+		res.status(500).json({ message: "Server error", error: error.message });
+
+	}
+});
+
+app.delete("/api/cart/", protectRoute, async (req, res) => { //This route is used to delete a product from the cart of the authenticated user.
+  try {
+		const { productId } = req.body;
+		const user = req.user;
+		
+    if (!productId) {
+			user.cartItems = [];
+		} else {
+			user.cartItems = user.cartItems.filter((item) => item.id !== productId);
+		}
+
+		await user.save();
+
+		res.json(user.cartItems);
+
+	} catch (error) {
+		res.status(500).json({ message: "Server error", error: error.message });
+	}
+
+});
+
+
+
 app.listen(PORT, () => {
     console.log('Server is running on http://localhost:' + PORT);
     connectDB();
