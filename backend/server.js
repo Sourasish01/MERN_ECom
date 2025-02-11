@@ -270,6 +270,123 @@ app.post("/api/products/", protectRoute, adminRoute, async (req, res) => { //Thi
 
 
 
+app.delete("/api/products/:id", protectRoute, adminRoute, async (req, res) => { //This route is used to delete a product from the database , as well as from cloudinary
+  
+  try {
+		const product = await Product.findById(req.params.id); // req.params.id is the id of the product to be deleted , which is sent in the request
+    //req.params.id is taken from the request URL (/products/:id).
+    // The await keyword ensures that the database query completes before moving forward.
+
+		if (!product) {                          //If the product is not found in the database, a 404 response is sent with a message: "Product not found".
+			return res.status(404).json({ message: "Product not found" });
+		}
+
+		if (product.image) { //If the product has an associated image, we extract the public ID from its URL.
+			const publicId = product.image.split("/").pop().split(".")[0];
+
+
+			try {
+				await cloudinary.uploader.destroy(`products/${publicId}`); //This deletes the image from Cloudinary using cloudinary.uploader.destroy(publicId).
+				console.log("deleted image from cloduinary");
+			} catch (error) {
+				console.log("error deleting image from cloduinary", error);
+			}
+		}
+
+		await Product.findByIdAndDelete(req.params.id); //Deletes the product from the database.
+    //await waits for MongoDB to respond before moving to the next line.
+    //If the document is found and deleted:...MongoDB returns the deleted document. ...await waits until MongoDB sends this response.
+    //MongoDB returns null, meaning nothing was deleted.
+    ////If there is an error (e.g., invalid ID format):....MongoDB throws an error, and await ensures it's caught in the catch block.
+
+		res.json({ message: "Product deleted successfully" });//Sends a success response back to the client.
+
+	} catch (error) { // error cathch handling block
+		console.log("Error in deleteProduct controller", error.message);
+		res.status(500).json({ message: "Server error", error: error.message });
+	}
+
+});
+
+
+app.get("/api/products/recommendations", async (req, res) => { //This route is used to fetch recommended products from the database. ..it is a public route, open to all
+  try {
+		const products = await Product.aggregate([ // Fetching Random Products using MongoDB Aggregation
+			{
+				$sample: { size: 4 },
+			},
+			{
+				$project: {
+					_id: 1,
+					name: 1,
+					description: 1,
+					image: 1,
+					price: 1,
+				},
+			},
+		]);
+
+		res.json(products);
+	} catch (error) {
+		console.log("Error in getRecommendedProducts controller", error.message);
+		res.status(500).json({ message: "Server error", error: error.message });
+	}
+
+});
+
+
+app.get("/api/products/category/:category", async (req, res) => { //This route is used to fetch products by category from the database. ..it is a public route, open to all
+  
+  const { category } = req.params;
+	try {
+		const products = await Product.find({ category });
+		res.json({ products });
+	} catch (error) {
+		console.log("Error in getProductsByCategory controller", error.message);
+		res.status(500).json({ message: "Server error", error: error.message });
+	}
+
+});  
+
+
+app.patch("/api/products/:id", protectRoute, adminRoute, async (req, res) => { //This route is used to update a product in the database ,
+//  ie the feauted status of the product
+
+  try {
+		const product = await Product.findById(req.params.id);
+		if (product) {
+			product.isFeatured = !product.isFeatured;
+			const updatedProduct = await product.save();
+
+			await updateFeaturedProductsCache(); //updateFeaturedProductsCache() is likely a function that updates a cached version of featured products.
+      //This ensures that real-time changes are reflected in the frontend without waiting for a fresh database query.
+			res.json(updatedProduct);
+		} else {
+			res.status(404).json({ message: "Product not found" });
+		}
+	} catch (error) {
+		console.log("Error in toggleFeaturedProduct controller", error.message);
+		res.status(500).json({ message: "Server error", error: error.message });
+	}
+
+});  
+
+
+async function updateFeaturedProductsCache() { //This function is used to update the cache of featured products in Redis.
+	try {
+		// The lean() method  is used to return plain JavaScript objects instead of full Mongoose documents. This can significantly improve performance
+		const featuredProducts = await Product.find({ isFeatured: true }).lean();//Product.find({ isFeatured: true }) → Queries MongoDB to get all products
+    //  where isFeatured = true.
+		//.lean() → Converts Mongoose documents into plain JavaScript objects instead of full Mongoose models.
+
+    await redis.set("featured_products", JSON.stringify(featuredProducts)); // Saves the featured products in Redis as a JSON string.
+
+	} catch (error) {
+		console.log("error in update cache function");
+	}
+};
+
+
 app.listen(PORT, () => {
     console.log('Server is running on http://localhost:' + PORT);
     connectDB();
