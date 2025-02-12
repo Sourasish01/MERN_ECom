@@ -394,7 +394,8 @@ app.post("/api/cart/", protectRoute, async (req, res) => { //This route is used 
 		const { productId } = req.body;
 		const user = req.user;
 
-		const existingItem = user.cartItems.find((item) => item.id === productId);
+		const existingItem = user.cartItems.find((item) => item.product.toString() === productId);//
+
 		if (existingItem) {
       existingItem.quantity += 1; // Increase quantity if the product is already in the cart
     } else {
@@ -416,11 +417,12 @@ app.post("/api/cart/", protectRoute, async (req, res) => { //This route is used 
 app.get("/api/cart/", protectRoute, async (req, res) => { //This route is used to fetch the cart of the authenticated user.
   
   try {
-		const products = await Product.find({ _id: { $in: req.user.cartItems } });
+		const products = await Product.find({ _id: { $in: req.user.cartItems } }); //all products in the user's cart are fetched from the  product collection in database:
+		// as each user has a cartItems array which contains the product ids of the products linked to the product collection in the database
 
 		// add quantity for each product
 		const cartItems = products.map((product) => {
-			const item = req.user.cartItems.find((cartItem) => cartItem.id === product.id);
+			const item = req.user.cartItems.find((item) => item.product.toString() === product.id);
 			return { ...product.toJSON(), quantity: item.quantity };
 		});
 
@@ -442,7 +444,8 @@ app.put("/api/cart/:id", protectRoute, async (req, res) => { //This route is use
 		const { id: productId } = req.params;
 		const { quantity } = req.body;
 		const user = req.user;
-		const existingItem = user.cartItems.find((item) => item.id === productId);
+		const existingItem = user.cartItems.find((item) => item.product.toString() === productId);//
+
 
 		if (existingItem) {
 			if (quantity === 0) {
@@ -472,7 +475,8 @@ app.delete("/api/cart/", protectRoute, async (req, res) => { //This route is use
     if (!productId) {
 			user.cartItems = [];
 		} else {
-			user.cartItems = user.cartItems.filter((item) => item.id !== productId);
+			user.cartItems = user.cartItems.filter((item) => item.product.toString() !== productId);//
+
 		}
 
 		await user.save();
