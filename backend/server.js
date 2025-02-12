@@ -6,6 +6,7 @@ import jwt from "jsonwebtoken";
 
 import User from "./models/user.model.js";
 import Product from "./models/product.model.js";
+import Coupon from "./models/coupon.model.js";
 import cloudinary from "./lib/cloudinary.js";
 
 
@@ -449,7 +450,7 @@ app.put("/api/cart/:id", protectRoute, async (req, res) => { //This route is use
 
 		if (existingItem) {
 			if (quantity === 0) {
-				user.cartItems = user.cartItems.filter((item) => item.id !== productId);
+				user.cartItems = user.cartItems.filter((item) => item.product.toString() !== productId);//
 				await user.save();
 				return res.json(user.cartItems);
 			}
@@ -475,7 +476,7 @@ app.delete("/api/cart/", protectRoute, async (req, res) => { //This route is use
     if (!productId) {
 			user.cartItems = [];
 		} else {
-			user.cartItems = user.cartItems.filter((item) => item.product.toString() !== productId);//
+			user.cartItems = user.cartItems.filter((item) => item.product.toString() !== productId);// 
 
 		}
 
@@ -490,6 +491,50 @@ app.delete("/api/cart/", protectRoute, async (req, res) => { //This route is use
 });
 
 
+
+// COUPON ROUTES
+
+app.get("/api/coupons/", protectRoute,  async (req, res) => {  //This API endpoint is used to fetch an active coupon for the authenticated user.
+
+	try {
+		const coupon = await Coupon.findOne({ userId: req.user._id, isActive: true });
+		res.json(coupon || null);
+	} catch (error) {
+		console.log("Error in getCoupon controller", error.message);
+		res.status(500).json({ message: "Server error", error: error.message });
+	}
+ 
+});
+
+app.get("/api/coupons/validate", protectRoute, async (req, res) => { // This API endpoint is used to validate a coupon code for the authenticated user.
+
+	try {
+		const { code } = req.body;
+		const coupon = await Coupon.findOne({ code: code, userId: req.user._id, isActive: true });
+
+		if (!coupon) {
+			return res.status(404).json({ message: "Coupon not found" });
+		}
+
+		if (coupon.expirationDate < new Date()) {
+			coupon.isActive = false;
+			await coupon.save();
+			return res.status(404).json({ message: "Coupon expired" });
+		}
+
+		res.json({
+			message: "Coupon is valid",
+			code: coupon.code,
+			discountPercentage: coupon.discountPercentage,
+		});
+	} catch (error) {
+		console.log("Error in validateCoupon controller", error.message);
+		res.status(500).json({ message: "Server error", error: error.message });
+	}
+
+});	
+
+  
 
 app.listen(PORT, () => {
     console.log('Server is running on http://localhost:' + PORT);
