@@ -7,6 +7,7 @@ import jwt from "jsonwebtoken";
 import User from "./models/user.model.js";
 import Product from "./models/product.model.js";
 import Coupon from "./models/coupon.model.js";
+import Order from "./models/order.model.js";
 import cloudinary from "./lib/cloudinary.js";
 
 
@@ -533,6 +534,151 @@ app.get("/api/coupons/validate", protectRoute, async (req, res) => { // This API
 	}
 
 });	
+
+
+// PAYMENT ROUTES
+
+
+
+
+//ANALYTICAL ROUTES
+
+app.get("/api/analytics/", protectRoute, adminRoute, async (req, res) => {
+
+	try {
+		const analyticsData = await getAnalyticsData();
+
+		const endDate = new Date();
+		const startDate = new Date(endDate.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+		const dailySalesData = await getDailySalesData(startDate, endDate);
+
+		res.json({
+			analyticsData,
+			dailySalesData,
+		});
+	} catch (error) {
+		console.log("Error in analytics route", error.message);
+		res.status(500).json({ message: "Server error", error: error.message });
+	}
+
+});
+
+
+const getAnalyticsData = async () => {
+	const totalUsers = await User.countDocuments();
+	const totalProducts = await Product.countDocuments();
+
+	const salesData = await Order.aggregate([
+		{
+			$group: {
+				_id: null, // it groups all documents together,
+				totalSales: { $sum: 1 },
+				totalRevenue: { $sum: "$totalAmount" },
+			},
+		},
+	]);
+
+	let total_Sales = 0;
+	let total_Revenue = 0;
+
+	if (salesData[0] != null) { 
+		total_Sales = salesData[0].totalSales; 
+		total_Revenue = salesData[0].totalRevenue; 
+	}
+	  
+	return {
+		users: totalUsers,
+		products: totalProducts,
+		total_Sales,
+		total_Revenue,
+	};
+};
+
+
+
+const getDailySalesData = async (startDate, endDate) => {
+	try {
+		const dailySalesData = await Order.aggregate([
+			{
+				$match: {
+					createdAt: {
+						$gte: startDate,
+						$lte: endDate,
+					},
+				},
+			},
+			
+			{
+				$group: {
+					_id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+					sales: { $sum: 1 },
+					revenue: { $sum: "$totalAmount" },
+				},
+			},
+			{ $sort: { _id: 1 } },
+		]);
+
+		// example of dailySalesData
+		// [
+		// 	{
+		// 		_id: "2024-08-18",
+		// 		sales: 12,
+		// 		revenue: 1450.75
+		// 	},
+		// ]
+
+		const dateArray = getDatesInRange(startDate, endDate);
+		// console.log(dateArray) // ['2024-08-18', '2024-08-19', ... ]
+
+		return dateArray.map((date) => {
+			const foundData = dailySalesData.find((item) => item._id === date);
+
+			return {
+				date,
+				sales: foundData?.sales || 0,
+				revenue: foundData?.revenue || 0,
+			};
+		});
+	} catch (error) {
+		throw error;
+	}
+};
+
+
+function getDatesInRange(startDate, endDate) { // we are taking the start and end date as javascript date objects
+	const dates = []; //// Step 1: Create an empty array to store dates
+
+
+
+    // startDate is already a Date object, not a string.
+	// new Date(startDate) ensures that currentDate is a new Date object, independent of startDate.
+
+	// If startDate were a string, JavaScript would try to convert it into a Date object inside new Date(startDate).
+	// it will still work, currentDate will be a Date object, but it's better to pass a Date object to new Date().
+	
+	let currentDate = new Date(startDate);
+
+	// in JavaScript, when you assign an object (including a Date object) to another variable, it does not create a new copy.
+	//  Instead, it stores a reference to the same object in memory.
+	//This means that if you modify one variable, the changes will reflect in the other because both are pointing to the same object.
+	
+	//if let currentDate = startDate; currentDate would reference the same object as startDate.
+	//Modifying currentDate would also modify startDate, causing unintended bugs.
+
+
+
+	while (currentDate <= endDate) { ////  Loop until currentDate passes endDate
+
+		dates.push(currentDate.toISOString().split("T")[0]); //✅ This converts the currentDate into a string in the format YYYY-MM-DD and adds it to the dates array.
+		//Converts the Date object into an ISO 8601 string format (e.g., "2024-08-18T00:00:00.000Z").
+		//Splits the string at "T" and takes the first part (before T), which is just the date (e.g., "2024-08-18").
+		currentDate.setDate(currentDate.getDate() + 1); //This increments the currentDate by one day, so the loop continues processing the next date.
+	}
+
+	return dates;
+}
+
 
   
 
