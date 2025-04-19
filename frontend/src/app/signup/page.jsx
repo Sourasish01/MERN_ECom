@@ -7,7 +7,7 @@ import { UserPlus, Mail, Lock, User, ArrowRight, Loader } from "lucide-react";
 import { motion } from "framer-motion";
 
 const page = () => {
-  const loading = true; // for now..initial
+  const loading = false; // for now..initial
 
   const [formData, setFormData] = useState({
 		name: "",
