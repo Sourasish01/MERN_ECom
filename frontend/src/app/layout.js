@@ -21,7 +21,7 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen bg-gray-900 text-white relative `}>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen bg-gray-900 text-white relative`}>
         {/* Background gradient */}
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute inset-0">
