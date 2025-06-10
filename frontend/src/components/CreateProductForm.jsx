@@ -20,10 +20,41 @@ const CreateProductForm = () => {
 
 const handleSubmit = (e) => {
     e.preventDefault();
-    console.log(newProduct);
+    console.log(newProduct);  // for now....
+
+/*  try {
+			await createProduct(newProduct);
+			setNewProduct({ name: "", description: "", price: "", category: "", image: "" });
+		} catch {
+			console.log("error creating a product");
+		}
+*/
+	// Here you would typically call a function to handle the product creation logic,
+	// such as sending the data to your backend API.
+	// For now, we just log the new product to the console.
 }
 
+/* const handleImageChange = (e) => {
+		const file = e.target.files[0];
+		if (file) {
+			const reader = new FileReader();
+
+			reader.onloadend = () => {
+				setNewProduct({ ...newProduct, image: reader.result });
+			};
+
+			reader.readAsDataURL(file); // base64
+		}
+	};
+
+	// this function will handle the image upload logic
+    // For now, we just set the image data in the state.
+
+
+*/
+
 const loading = false; // Replace with your loading state logic
+//const { createProduct, loading } = useProductStore();
 
   return (
     <motion.div
