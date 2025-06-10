@@ -34,24 +34,21 @@ const handleSubmit = (e) => {
 	// For now, we just log the new product to the console.
 }
 
-/* const handleImageChange = (e) => {
-		const file = e.target.files[0];
-		if (file) {
-			const reader = new FileReader();
+const handleImageChange = (e) => {
+	const file = e.target.files[0];
+	if (file) {
+		const reader = new FileReader();
 
-			reader.onloadend = () => {
-				setNewProduct({ ...newProduct, image: reader.result });
-			};
+		reader.onloadend = () => {
+			setNewProduct({ ...newProduct, image: reader.result });
+		};
 
-			reader.readAsDataURL(file); // base64
-		}
-	};
-
-	// this function will handle the image upload logic
-    // For now, we just set the image data in the state.
+		reader.readAsDataURL(file); // base64 // this is the main part that converts the image to base64 and triggers the onloadend event
+	}
+};
+	
 
 
-*/
 
 const loading = false; // Replace with your loading state logic
 //const { createProduct, loading } = useProductStore();
@@ -142,10 +139,11 @@ const loading = false; // Replace with your loading state logic
 				</div>
 
 				<div className='mt-1 flex items-center'>
-					<input type='file' id='image' className='sr-only' accept='image/*' /*onChange={handleImageChange}*/ />
+					<input type='file' id='image' className='sr-only' accept='image/*' onChange={handleImageChange} />
 					<label
 						htmlFor='image'
-						className='cursor-pointer bg-gray-700 py-2 px-3 border border-gray-600 rounded-md shadow-sm text-sm leading-4 font-medium text-gray-300 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500'
+						className='cursor-pointer bg-gray-700 py-2 px-3 border border-gray-600 rounded-md shadow-sm text-sm leading-4 font-medium text-gray-300
+						 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500'
 					>
 						<Upload className='h-5 w-5 inline-block mr-2' />
 						Upload Image
