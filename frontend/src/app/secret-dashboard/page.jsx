@@ -9,6 +9,8 @@ import { useEffect, useState } from "react";
 import AnalyticsTab from "@/components/AnalyticsTab";
 import CreateProductForm from "@/components/CreateProductForm";
 import ProductsList from "@/components/ProductsList";
+// import { useProductStore } from "../stores/useProductStore";
+
 
 
 const tabs = [
@@ -21,6 +23,22 @@ const tabs = [
 const page = () => {
 
   const [activeTab, setActiveTab] = useState("create");
+
+  /*
+	const { fetchAllProducts } = useProductStore(); // we called the fetchAllProducts function from the store
+													
+		useEffect(() => {
+			fetchAllProducts();
+		}, [fetchAllProducts]);
+
+		// This will be used to fetch all products when the component mounts
+		// so when we are on the products tab, we have the products ready to display..
+		// or else if we used the same useEffect in ProductsList, it would fetch the products every time we switch to the Products tab,
+		//  which is not efficient...and it would cause a flicker effect when switching tabs..
+		//  because the fetching would take some time to complete and till then the products would not be displayed...
+
+		// in products tab we just need to use 'products' state from the store ..as it would have already been fetched
+  */ 
 
 
   return (
