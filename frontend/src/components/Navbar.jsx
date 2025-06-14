@@ -6,7 +6,7 @@ import Link from "next/link";
 
 
 const Navbar = () => {
-    const user = false;
+    const user = true;
     const isAdmin = true;
     const cart = 3;
 
