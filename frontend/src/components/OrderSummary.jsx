@@ -59,13 +59,13 @@ const OrderSummary = () => {
 							<dd className='text-base font-medium text-emerald-400'>-${formattedSavings}</dd>
 						</dl>
 					)}
-
+{					/*
 					{coupon && isCouponApplied && (
 						<dl className='flex items-center justify-between gap-4'>
 							<dt className='text-base font-normal text-gray-300'>Coupon ({coupon.code})</dt>
 							<dd className='text-base font-medium text-emerald-400'>-{coupon.discountPercentage}%</dd>
 						</dl>
-					)}
+					)} */}
 					<dl className='flex items-center justify-between gap-4 border-t border-gray-600 pt-2'>
 						<dt className='text-base font-bold text-white'>Total</dt>
 						<dd className='text-base font-bold text-emerald-400'>${formattedTotal}</dd>
@@ -85,7 +85,7 @@ const OrderSummary = () => {
 				<div className='flex items-center justify-center gap-2'>
 					<span className='text-sm font-normal text-gray-400'>or</span>
 					<Link
-						to='/'
+						href='/'
 						className='inline-flex items-center gap-2 text-sm font-medium text-emerald-400 underline
                          hover:text-emerald-300 hover:no-underline'
 					>
