@@ -36,6 +36,18 @@ app.use(express.json()); // to get hold of the JSON data from the body of the re
 
 app.use(cookieParser()); // to get hold of the cookies from the request
 
+import cors from "cors";
+
+// Use it before your routes
+app.use(
+  cors({
+    origin: "http://localhost:3000", // your frontend origin
+    credentials: true, // allow cookies to be sent
+  })
+);
+
+
+
 
 
 
@@ -70,6 +82,7 @@ app.post("/api/auth/signup", async (req, res) => {
             email,
             password: hashedPassword,
           });
+
 
           //When you create a new instance of a Mongoose model (like new User(...)), Mongoose pre-generates the _id for the object, even before it is saved to the database.
           //The newUser._id is already available because Mongoose has pre-generated it.
@@ -195,7 +208,7 @@ app.post("/api/auth/refresh-accesstoken", async (req, res) => {
 
 
 
-app.get("/api/auth/profile", async (req, res) => {
+app.get("/api/auth/profile", protectRoute, async (req, res) => {
   try {
 		res.json(req.user);
 	} catch (error) {

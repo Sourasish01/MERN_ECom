@@ -1,23 +1,35 @@
 'use client';
 
 import React from 'react'
-import { useState } from 'react'
+import { useState,useEffect } from 'react'
 import Link from 'next/link'
 import { motion } from "framer-motion";
 import { LogIn, Mail, Lock, ArrowRight, Loader } from "lucide-react";
+import { useUserStore } from '@/store/useUserStore';
+import { useRouter } from "next/navigation";
 
 
 const page = () => {
 
-  const loading = false; // for now..initial
+    const router = useRouter();
+  const { login, loading, user } = useUserStore(); // ✅ grab user from store
 
   const [email, setEmail] = useState("");
-	const [password, setPassword] = useState("");
+  const [password, setPassword] = useState("");
 
-  const handleSubmit = (e) => {
-		e.preventDefault();
-		console.log(email, password);
-	};
+  // ✅ Redirect to home if already logged in
+  useEffect(() => {
+    if (user) {
+      router.push("/"); // navigate to homepage if user exists
+    }
+  }, [user, router]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    await login(email, password);
+    // 👆 No need to manually push here; `useEffect` will handle it once user is set
+  };
+
 
   return (
 		<div className='flex flex-col justify-center py-12 sm:px-6 lg:px-8'>

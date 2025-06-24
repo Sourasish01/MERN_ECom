@@ -1,25 +1,38 @@
-'use client';
+"use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useUserStore } from "@/store/useUserStore";
 
 import { UserPlus, Mail, Lock, User, ArrowRight, Loader } from "lucide-react";
 import { motion } from "framer-motion";
 
 const page = () => {
-  const loading = false; // for now..initial
+	const router = useRouter();
 
-  const [formData, setFormData] = useState({
+	const { signup, loading, user } = useUserStore();
+
+	// ✅ Redirect if already logged in
+	useEffect(() => {
+		if (user) {
+			router.push("/");
+		}
+	}, [user, router]);
+
+	// ✅ Form state
+	const [formData, setFormData] = useState({
 		name: "",
 		email: "",
 		password: "",
 		confirmPassword: "",
 	});
 
-  const handleSubmit = (e) => { // for now..initial
+	// ✅ Form submission handler
+	const handleSubmit = (e) => {
 		e.preventDefault();
-    console.log(formData);
-  }	
+		signup(formData); // triggers Zustand signup
+	};
 
     return (
       <div className='flex flex-col justify-center py-12 sm:px-6 lg:px-8'>

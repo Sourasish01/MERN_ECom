@@ -1,6 +1,7 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
+import AuthHydration from "@/components/AuthHydration";
 import { Toaster } from "react-hot-toast";
 
 const geistSans = Geist({
@@ -30,7 +31,8 @@ export default function RootLayout({ children }) {
         </div>
 
         <div className="relative z-50 pt-20">
-            <Navbar />
+          <AuthHydration />
+          <Navbar />
           {children}
         </div>
         <Toaster />
