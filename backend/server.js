@@ -20,9 +20,17 @@ import { adminRoute, protectRoute } from "./middleware/auth.middleware.js";
 
 dotenv.config(); // to access the .env file
 
+
+// STARTING THE SERVER & CONNECTING TO THE DATABASE
+
 const PORT = process.env.PORT; // to access the port from the .env file
 
 const app = express();
+
+app.listen(PORT, () => {
+    console.log('Server is running on http://localhost:' + PORT);
+    connectDB();
+});
 
 app.use(express.json()); // to get hold of the JSON data from the body of the request
 
@@ -48,7 +56,8 @@ app.post("/api/auth/signup", async (req, res) => {
         }
 
 
-        const user = await User.findOne({ email }); // check if user already exists in the database
+        const user = await User.findOne({ email }); // check if user already exists in the database in  the User collection. 
+		// here .User is the model/collection and findOne() is a method of the model
         if (user) return res.status(400).json({ message: "Email already exists" });
 
 
@@ -56,7 +65,7 @@ app.post("/api/auth/signup", async (req, res) => {
         const hashedPassword = await bcrypt.hash(password, salt); // hash the password with the salt
 
 
-        const newUser = new User({ // new User() creates a new user object, where User() only refers to the model, wheras const newUser is an instance of the user object created by the model
+        const newUser = new User({ // new User() creates a new user object, where User() only refers to the model, wheras const newUser is an instance of the user object created by the model in backend
             name,
             email,
             password: hashedPassword,
@@ -682,8 +691,5 @@ function getDatesInRange(startDate, endDate) { // we are taking the start and en
 
   
 
-app.listen(PORT, () => {
-    console.log('Server is running on http://localhost:' + PORT);
-    connectDB();
-});
+
 

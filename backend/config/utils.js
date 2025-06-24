@@ -17,18 +17,18 @@ export const generateToken = async (userId, res) => {
 	await redis.set(`refresh_token:${userId}`, refreshToken, "EX", 7 * 24 * 60 * 60); // 7 days
 
 
-    res.cookie("accesstoken123", accessToken, { // send the jwt token as a cookie to the client as "access-token" cookie
+    res.cookie("accesstoken123", accessToken, { // send the jwt token as a cookie to the client as "accesstoken123" cookie
 		httpOnly: true, // prevent XSS attacks, cross site scripting attack
 		secure: process.env.NODE_ENV !== "development", // secure when in production, this will only work in https
 		sameSite: "strict", // prevents CSRF attack, cross-site request forgery attack
 		maxAge: 15 * 60 * 1000, // 15 minutes
 	});
-	res.cookie("refreshtoken123", refreshToken, { // send the jwt token as a cookie to the client as "refresh-token" cookie
+	res.cookie("refreshtoken123", refreshToken, { // send the jwt token as a cookie to the client as "refreshtoken123" cookie
 		httpOnly: true, // prevent XSS attacks, cross site scripting attack
 		secure: process.env.NODE_ENV !== "development", // secure when in production, this will only work in https
 		sameSite: "strict", // prevents CSRF attack, cross-site request forgery attack
 		maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
 	});
 
-return { accessToken, refreshToken };
+return { accessToken, refreshToken }; // return the tokens to the client which can be used for further requests
 };
