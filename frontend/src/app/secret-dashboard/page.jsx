@@ -9,7 +9,9 @@ import { useEffect, useState } from "react";
 import AnalyticsTab from "@/components/AnalyticsTab";
 import CreateProductForm from "@/components/CreateProductForm";
 import ProductsList from "@/components/ProductsList";
-// import { useProductStore } from "../stores/useProductStore";
+import { useProductStore } from "@/store/useProductStore";
+import { useUserStore } from "@/store/useUserStore";
+import { useRouter } from "next/navigation";
 
 
 
@@ -21,11 +23,26 @@ const tabs = [
 
 
 const page = () => {
+	const router = useRouter();
+	
+	const { user, checkingAuth } = useUserStore();
 
-  const [activeTab, setActiveTab] = useState("create");
+	useEffect(() => {
+		// 1. **Crucial Step:** Wait for authentication check to complete.
+		if (checkingAuth) { 
+			return; // Exit the effect, do nothing yet.
+		}
 
-  /*
-	const { fetchAllProducts } = useProductStore(); // we called the fetchAllProducts function from the store
+		// 2. Authentication check is done (checkingAuth is false). Now evaluate user status.
+		if (!user || user.role !== "admin") {
+			router.push("/");
+		}
+	}, [user, checkingAuth, router]); // Dependency on checkingAuth
+
+	const [activeTab, setActiveTab] = useState("create");
+
+
+	const { fetchAllProducts } = useProductStore(); // we called the fetchAllProducts function from the store and store it in  products state
 													
 		useEffect(() => {
 			fetchAllProducts();
@@ -38,7 +55,7 @@ const page = () => {
 		//  because the fetching would take some time to complete and till then the products would not be displayed...
 
 		// in products tab we just need to use 'products' state from the store ..as it would have already been fetched
-  */ 
+
 
 
   return (

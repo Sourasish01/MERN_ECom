@@ -2,13 +2,13 @@
 
 import { motion } from "framer-motion";
 import { Trash, Star } from "lucide-react";
-// import { useProductStore } from "../stores/useProductStore"; will use later when we have the store set up
+import { useProductStore } from "@/store/useProductStore";
 
 const ProductsList = () => {
-	//const { deleteProduct, toggleFeaturedProduct, products } = useProductStore(); 
+	const { toggleFeaturedProduct, products } = useProductStore();
   // // we will get the products that were fetched after the call from the admin page..
 
-	//console.log("products", products); // Logs products for debugging.
+	console.log("products", products); // Logs products for debugging.
 
 	return (
 		<motion.div
@@ -55,7 +55,7 @@ const ProductsList = () => {
 				</thead>
 
 				<tbody className='bg-gray-800 divide-y divide-gray-700'>
-{/*				{products?.map((product) => (
+				{products?.map((product) => (
 						<tr key={product._id} className='hover:bg-gray-700'>
 							<td className='px-6 py-4 whitespace-nowrap'>
 								<div className='flex items-center'>
@@ -79,7 +79,7 @@ const ProductsList = () => {
 							</td>
 							<td className='px-6 py-4 whitespace-nowrap'>
 								<button
-									//onClick={() => toggleFeaturedProduct(product._id)}
+									onClick={() => toggleFeaturedProduct(product._id)}
 									className={`p-1 rounded-full ${
 										product.isFeatured ? "bg-yellow-400 text-gray-900" : "bg-gray-600 text-gray-300"
 									} hover:bg-yellow-500 transition-colors duration-200`}
@@ -97,7 +97,7 @@ const ProductsList = () => {
 							</td>
 						</tr>
 					))}
-*/}			</tbody>
+			</tbody>
 			</table>
 		</motion.div>
 	);

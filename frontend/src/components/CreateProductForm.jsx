@@ -4,10 +4,9 @@ import React from 'react'
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { PlusCircle, Upload, Loader } from "lucide-react";
+import { useProductStore } from "@/store/useProductStore"; // Assuming you have a Zustand store for products
 
 const categories = ["jeans", "t-shirts", "shoes", "glasses", "jackets", "suits", "bags"];
-
-
 
 const CreateProductForm = () => {
     const [newProduct, setNewProduct] = useState({
@@ -18,17 +17,19 @@ const CreateProductForm = () => {
 		image: "",
 	});
 
-const handleSubmit = (e) => {
+const { createProduct, loading } = useProductStore(); // hook can only be used in a React component, so we can use it here to access the createProduct function and loading state
+
+const handleSubmit = async(e) => {
     e.preventDefault();
     console.log(newProduct);  // for now....
 
-/*  try {
+  try {
 			await createProduct(newProduct);
 			setNewProduct({ name: "", description: "", price: "", category: "", image: "" });
 		} catch {
 			console.log("error creating a product");
 		}
-*/
+
 	// Here you would typically call a function to handle the product creation logic,
 	// such as sending the data to your backend API.
 	// For now, we just log the new product to the console.
@@ -50,8 +51,7 @@ const handleImageChange = (e) => {
 
 
 
-const loading = false; // Replace with your loading state logic
-//const { createProduct, loading } = useProductStore();
+
 
   return (
     <motion.div
