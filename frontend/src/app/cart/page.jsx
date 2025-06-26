@@ -1,30 +1,50 @@
 'use client';
 
 
-//import { useCartStore } from "../stores/useCartStore";
+import { useCartStore } from "@/store/useCartStore";
 import { motion } from "framer-motion";
 import EmptyCartUI from "@/components/EmptyCartUI";
 import CartItem from "@/components/CartItem";
 import PeopleAlsoBought from "@/components/PeopleAlsoBought";
 import OrderSummary from "@/components/OrderSummary";
 import GiftCouponCard from "@/components/GiftCouponCard";
+import { useUserStore } from "@/store/useUserStore";
+import { useRouter } from "next/navigation";
+import { useEffect} from "react";
 
 const CartPage = () => {
-	//const { cart } = useCartStore();
-  const cart = [
-    {
-      _id: "1",
-      title: "Product 1",
-      price: 100,
-      quantity: 1,
-    },
-    {
-      _id: "2",
-      title: "Product 2",
-      price: 200,
-      quantity: 2,
-    },
-  ];
+	const router = useRouter();
+		
+	const { user, checkingAuth } = useUserStore();
+
+	useEffect(() => {
+		// 1. **Crucial Step:** Wait for authentication check to complete.
+		if (checkingAuth) { 
+			return; // Exit the effect, do nothing yet.
+		}
+
+		// 2. Authentication check is done (checkingAuth is false). Now evaluate user status.
+		if (!user  || !user._id) {
+			router.push("/");
+		}
+	}, [user, checkingAuth, router]); // Dependency on checkingAuth
+
+	const { cart } = useCartStore();
+	/*const cart = [
+		{
+		_id: "1",
+		title: "Product 1",
+		price: 100,
+		quantity: 1,
+		},
+		{
+		_id: "2",
+		title: "Product 2",
+		price: 200,
+		quantity: 2,
+		},
+	];
+	*/
 
 	return (
 		<div className='py-8 md:py-16'>

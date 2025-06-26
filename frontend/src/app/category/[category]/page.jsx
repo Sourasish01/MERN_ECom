@@ -2,22 +2,22 @@
 
 
 import { useEffect } from "react";
-//import { useProductStore } from "../stores/useProductStore";
+import { useProductStore } from "@/store/useProductStore";
 import { useParams } from "next/navigation";
 import { motion } from "framer-motion";
 import ProductCard from "@/components/ProductCard";
 
 const CategoryPage = () => {
-	//const { fetchProductsByCategory, products } = useProductStore();
+	const { fetchProductsByCategory, products } = useProductStore();
 
 	const { category } = useParams();
-/*
+	
 	useEffect(() => {
 		fetchProductsByCategory(category);
 	}, [fetchProductsByCategory, category]);
 
 	console.log("products:", products);
-*/  
+  
 
 	return (
 		<div className='min-h-screen'>
@@ -36,17 +36,17 @@ const CategoryPage = () => {
 					initial={{ opacity: 0, y: 20 }}
 					animate={{ opacity: 1, y: 0 }}
 					transition={{ duration: 0.8, delay: 0.2 }}
-				>{/*
+				>
 					{products?.length === 0 && (
 						<h2 className='text-3xl font-semibold text-gray-300 text-center col-span-full'>
 							No products found
 						</h2>
 					)}
-            */}
+				
 
-				{/*	{products?.map((product) => (
+					{products?.map((product) => (
 						<ProductCard key={product._id} product={product} />
-					))} */}
+					))} 
 				</motion.div>
 			</div>
 		</div>

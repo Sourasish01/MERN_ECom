@@ -308,19 +308,15 @@ app.delete("/api/products/:id", protectRoute, adminRoute, async (req, res) => { 
 		if (!product) {                          //If the product is not found in the database, a 404 response is sent with a message: "Product not found".
 			return res.status(404).json({ message: "Product not found" });
 		}
-
-		if (product.image) { //If the product has an associated image, we extract the public ID from its URL.
+		if (product.image) { //If the product has an associated image, we extract the public ID of cloudinary from its URL.
 			const publicId = product.image.split("/").pop().split(".")[0];
-
-
 			try {
 				await cloudinary.uploader.destroy(`products/${publicId}`); //This deletes the image from Cloudinary using cloudinary.uploader.destroy(publicId).
-				console.log("deleted image from cloduinary");
+				console.log("deleted image from cloudinary");
 			} catch (error) {
-				console.log("error deleting image from cloduinary", error);
+				console.log("error deleting image from cloudinary", error);
 			}
 		}
-
 		await Product.findByIdAndDelete(req.params.id); //Deletes the product from the database.
     //await waits for MongoDB to respond before moving to the next line.
     //If the document is found and deleted:...MongoDB returns the deleted document. ...await waits until MongoDB sends this response.
@@ -363,7 +359,8 @@ app.get("/api/products/recommendations", async (req, res) => { //This route is u
 });
 
 
-app.get("/api/products/category/:category", async (req, res) => { //This route is used to fetch products by category from the database. ..it is a public route, open to all
+app.get("/api/products/category/:category", async (req, res) => { //This route is used to fetch products by category from the database.
+//  ..it is a public route, open to all
   
   const { category } = req.params;
 	try {
@@ -445,16 +442,17 @@ app.post("/api/cart/", protectRoute, async (req, res) => { //This route is used 
 app.get("/api/cart/", protectRoute, async (req, res) => { //This route is used to fetch the cart of the authenticated user.
   
   try {
-		const products = await Product.find({ _id: { $in: req.user.cartItems } }); //all products in the user's cart are fetched from the  product collection in database:
+		const productIds = req.user.cartItems.map((item) => item.product);
+        const products = await Product.find({ _id: { $in: productIds } }); //all products in the user's cart are fetched from the  product collection in database:
 		// as each user has a cartItems array which contains the product ids of the products linked to the product collection in the database
 
 		// add quantity for each product
-		const cartItems = products.map((product) => {
+		const cartItemsInfo = products.map((product) => {
 			const item = req.user.cartItems.find((item) => item.product.toString() === product.id);
 			return { ...product.toJSON(), quantity: item.quantity };
 		});
 
-		res.json(cartItems);
+		res.json(cartItemsInfo);
     
 	} catch (error) {
 		console.log("Error in getCartProducts controller", error.message);
@@ -472,17 +470,17 @@ app.put("/api/cart/:id", protectRoute, async (req, res) => { //This route is use
 		const { id: productId } = req.params;
 		const { quantity } = req.body;
 		const user = req.user;
-		const existingItem = user.cartItems.find((item) => item.product.toString() === productId);//
+		const existingItem = user.cartItems.find((item) => item.product.toString() === productId); // Find the item in the cart
 
 
 		if (existingItem) {
 			if (quantity === 0) {
-				user.cartItems = user.cartItems.filter((item) => item.product.toString() !== productId);//
+				user.cartItems = user.cartItems.filter((item) => item.product.toString() !== productId); // Remove item if quantity is 0
 				await user.save();
 				return res.json(user.cartItems);
 			}
 
-			existingItem.quantity = quantity;
+			existingItem.quantity = quantity;  // Update the quantity of the existing item
 			await user.save();
 			res.json(user.cartItems);
 		} else {
@@ -497,17 +495,17 @@ app.put("/api/cart/:id", protectRoute, async (req, res) => { //This route is use
 
 app.delete("/api/cart/", protectRoute, async (req, res) => { //This route is used to delete a product from the cart of the authenticated user.
   try {
-		const { productId } = req.body;
-		const user = req.user;
+		const { productId } = req.body; // from frontend 
+		const user = req.user; // from the protectRoute middleware, req.user is the authenticated user object
 		
     if (!productId) {
-			user.cartItems = [];
+			user.cartItems = []; // Clear the cart if no productId is provided
 		} else {
 			user.cartItems = user.cartItems.filter((item) => item.product.toString() !== productId);// 
 
 		}
 
-		await user.save();
+		await user.save(); 
 
 		res.json(user.cartItems);
 

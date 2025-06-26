@@ -5,7 +5,7 @@ import { Trash, Star } from "lucide-react";
 import { useProductStore } from "@/store/useProductStore";
 
 const ProductsList = () => {
-	const { toggleFeaturedProduct, products } = useProductStore();
+	const { toggleFeaturedProduct, products, deleteProduct } = useProductStore();
   // // we will get the products that were fetched after the call from the admin page..
 
 	console.log("products", products); // Logs products for debugging.
@@ -72,7 +72,7 @@ const ProductsList = () => {
 								</div>
 							</td>
 							<td className='px-6 py-4 whitespace-nowrap'>
-								<div className='text-sm text-gray-300'>${product.price.toFixed(2)}</div>
+								<div className='text-sm text-gray-300'>₹{product.price.toFixed(2)}</div>
 							</td>
 							<td className='px-6 py-4 whitespace-nowrap'>
 								<div className='text-sm text-gray-300'>{product.category}</div>
@@ -89,7 +89,7 @@ const ProductsList = () => {
 							</td>
 							<td className='px-6 py-4 whitespace-nowrap text-sm font-medium'>
 								<button
-									//onClick={() => deleteProduct(product._id)}
+									onClick={() => deleteProduct(product._id)}
 									className='text-red-400 hover:text-red-300'
 								>
 									<Trash className='h-5 w-5' />
