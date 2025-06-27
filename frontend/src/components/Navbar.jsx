@@ -10,7 +10,8 @@ import { useCartStore } from "@/store/useCartStore";
 const Navbar = () => {
     const { user, logout } = useUserStore();
 	const isAdmin = user?.role === "admin";
-    const { cart } = useCartStore();
+    const cart = useCartStore((state) => state.cart); // ✅ make sure this is used directly
+
 
     return (
 		<header className='fixed top-0 left-0 w-full bg-gray-900 bg-opacity-90 backdrop-blur-md shadow-lg z-40 transition-all duration-300 border-b border-emerald-800'>

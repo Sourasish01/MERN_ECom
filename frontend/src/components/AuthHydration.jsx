@@ -2,18 +2,26 @@
 
 import { useEffect } from "react";
 import { useUserStore } from "@/store/useUserStore";
-import { useCartStore } from "@/store/useCartStore"; // 👈 import cart store
+import { useCartStore } from "@/store/useCartStore";
 
 const AuthHydration = () => {
   const checkAuth = useUserStore((state) => state.checkAuth);
-  const getCartItems = useCartStore((state) => state.getCartItems); // 👈 import function
+  const user = useUserStore((state) => state.user); // ✅ get current user state
+  const getCartItems = useCartStore((state) => state.getCartItems);
 
+  // 🟡 1st useEffect: Check login status on load
   useEffect(() => {
-    checkAuth();       // 🔐 Check if user is authenticated
-    getCartItems();    // 🛒 Load user's cart from DB (if logged in)
-  }, [checkAuth, getCartItems]);
+    checkAuth();
+  }, [checkAuth]);
 
-  return null; // No UI rendering
+  // 🟢 2nd useEffect: Only run when user is available and authenticated
+  useEffect(() => {
+    if (user) {
+      getCartItems();
+    }
+  }, [user, getCartItems]);
+
+  return null;
 };
 
 export default AuthHydration;

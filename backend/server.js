@@ -333,7 +333,8 @@ app.delete("/api/products/:id", protectRoute, adminRoute, async (req, res) => { 
 });
 
 
-app.get("/api/products/recommendations", async (req, res) => { //This route is used to fetch recommended products from the database. ..it is a public route, open to all
+app.get("/api/products/recommendations", async (req, res) => { //This route is used to fetch recommended products from the database. ..
+// it is a public route, open to all
   try {
 		const products = await Product.aggregate([ // Fetching Random Products using MongoDB Aggregation
 			{

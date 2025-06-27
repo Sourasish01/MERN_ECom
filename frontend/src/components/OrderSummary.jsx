@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-//import { useCartStore } from "../stores/useCartStore";
+import { useCartStore } from "@/store/useCartStore";
 import Link from "next/link";
 import { MoveRight } from "lucide-react";
 // import { loadStripe } from "@stripe/stripe-js";
@@ -13,12 +13,12 @@ const stripePromise = loadStripe(
 
 const OrderSummary = () => {
 	
-//  const { total, subtotal, coupon, isCouponApplied, cart } = useCartStore();
+    const { total, subtotal } = useCartStore();
 
-	const savings = 0 //subtotal - total;
-	const formattedSubtotal = 0 //subtotal.toFixed(2);
-	const formattedTotal = 0//total.toFixed(2);
-	const formattedSavings = 0//savings.toFixed(2);
+	const savings = subtotal - total;
+	const formattedSubtotal = subtotal.toFixed(2);
+	const formattedTotal = total.toFixed(2);
+	const formattedSavings = savings.toFixed(2);
 /*
 	const handlePayment = async () => {
 		const stripe = await stripePromise;
