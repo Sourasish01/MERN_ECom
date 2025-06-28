@@ -17,6 +17,8 @@ import { generateToken } from "./config/utils.js";
 import { redis } from "./lib/redis.js";
 import { adminRoute, protectRoute } from "./middleware/auth.middleware.js";
 
+import axios from "axios";
+
 
 dotenv.config(); // to access the .env file
 
@@ -562,6 +564,186 @@ app.get("/api/coupons/validate", protectRoute, async (req, res) => { // This API
 
 
 // PAYMENT ROUTES
+
+app.post("/api/payments/create-cashfree-order", protectRoute, async (req, res) => { //This route is used to create a checkout session for the authenticated user.
+	try {
+		const { products, couponCode } = req.body;
+
+		const user = req.user;
+
+		//console.log("user:", user);
+		//console.log("products:", products);
+		//console.log("couponCode:", couponCode);
+
+		if (!Array.isArray(products) || products.length === 0) {
+			return res.status(400).json({ error: "Invalid or empty products array" });
+		}
+
+		// Calculate total
+		let totalAmount = 0;
+		products.forEach((product) => {
+			totalAmount += product.price * product.quantity;
+		});
+
+		// Apply coupon
+		let appliedCoupon = null;
+		if (couponCode) {
+			const foundCoupon = await Coupon.findOne({
+				code: couponCode,
+				userId: user._id,
+				isActive: true,
+			});
+			if (foundCoupon) {
+				appliedCoupon = foundCoupon;
+				const discount = totalAmount * (foundCoupon.discountPercentage / 100);
+				totalAmount -= Math.round(discount);
+			}
+		}
+
+		const orderId = `order_${Date.now()}`;
+        //console.log("Order ID:", orderId);
+
+		// Call Cashfree API
+		const response = await axios.post(
+			"https://sandbox.cashfree.com/pg/orders",
+			{
+				order_id: orderId,
+				order_amount: totalAmount,
+				order_currency: "INR",
+				customer_details: {
+					customer_id: user._id.toString(),
+					customer_email: user.email,
+					customer_name: user.name,
+					customer_phone: user.phone || "7099452646", // Fallback phone number
+				},
+				order_meta: {
+					return_url: `http://localhost:3000/purchase-result?order_id=${orderId}&coupon=${couponCode || ''}`,
+				},
+			},
+			{
+				headers: {
+					"x-api-version": "2022-09-01",
+					"x-client-id": process.env.CASH_FREE_API_KEY,
+					"x-client-secret": process.env.CASH_FREE_SECRET_KEY,
+					"Content-Type": "application/json",
+				},
+			}
+		);
+
+		console.log("Cashfree response:", response.data);
+
+		const sessionId = response.data.payment_session_id;
+		const paymentLink = response.data.payments.url; // <--- Corrected line!
+
+		
+		return res.status(200).json({ sessionId, totalAmount, paymentLink, couponCode, products }); // corrected line to return payment link
+	} catch (error) {
+		console.error("Cashfree order error:", error?.response?.data || error.message);
+		res.status(500).json({ error: "Cashfree order creation failed" });
+	}
+});
+
+app.post("/api/payments/cashfree-success", protectRoute, async (req, res) => {
+	try {
+		const { orderId, products, couponCode } = req.body;
+		console.log ("Cashfree success request body:", products);
+
+		// 🔒 Verify payment status via Cashfree API
+		const verifyResponse = await axios.get(
+			`https://sandbox.cashfree.com/pg/orders/${orderId}`,
+			{
+				headers: {
+					"x-api-version": "2022-09-01",
+					"x-client-id": process.env.CASH_FREE_API_KEY,
+					"x-client-secret": process.env.CASH_FREE_SECRET_KEY,
+				},
+			}
+		);
+
+		const data = verifyResponse.data;
+		console.log("Cashfree verify response:", data);
+
+		if (data.order_status !== "PAID") {
+			return res.status(400).json({
+				success: false,
+				status: data.order_status, // e.g. "FAILED", "CANCELLED"
+				message: `Payment ${data.order_status.toLowerCase()}. Please try again.`,
+			});
+		}
+
+		const sessionId = data.payment_session_id;
+		console.log("Cashfree session ID:", sessionId);
+
+
+		const user = req.user;
+
+		let totalAmount = 0;
+		products.forEach((product) => {
+			totalAmount += product.price * product.quantity;
+		});
+
+		console.log("Total amount before coupon:", totalAmount);
+
+		if (couponCode) {
+			const foundCoupon = await Coupon.findOne({
+				code: couponCode,
+				userId: user._id,
+				isActive: true,
+			});
+			if (foundCoupon) {
+				const discount = totalAmount * (foundCoupon.discountPercentage / 100);
+				totalAmount -= Math.round(discount);
+				await Coupon.findOneAndUpdate(
+					{ code: couponCode, userId: user._id },
+					{ isActive: false }
+				);
+			}
+		}
+
+		console.log("Total amount after coupon:", totalAmount);
+
+		const newOrder = new Order({
+			user: user._id,
+			products: products.map((p) => ({
+				product: p._id,
+				quantity: p.quantity,
+				price: p.price,
+			})),
+			totalAmount,
+			razorpaySessionId: sessionId, // still storing sessionId for reference
+		});
+		await newOrder.save();
+
+		await User.findByIdAndUpdate(user._id, { $set: { cartItems: [] } }); // Clear user's cart after successful payment
+
+		if (totalAmount >= 20000) {
+			await createNewCoupon(user._id);
+		}
+
+		res.status(200).json({
+			success: true,
+			message: "Payment successful, order confirmed",
+			orderId: newOrder._id,
+		});
+	} catch (error) {
+		console.error("Cashfree success error:", error.message);
+		res.status(500).json({ message: "Cashfree success processing failed" });
+	}
+});
+
+
+const createNewCoupon = async (userId) => { //This function is used to create a new coupon for the user.
+	await Coupon.findOneAndDelete({ userId });
+
+	const newCoupon = new Coupon({
+		code: "GIFT" + Math.random().toString(36).substring(2, 8).toUpperCase(),
+		discountPercentage: 10,
+		expirationDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+		userId: userId,
+	});
+	await newCoupon.save();
+	return newCoupon;
+}
 
 
 

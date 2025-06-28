@@ -1,42 +1,70 @@
+"use client";
+
 import { motion } from "framer-motion";
 import { useCartStore } from "@/store/useCartStore";
+import { useEffect, useState } from "react";
+
 import Link from "next/link";
 import { MoveRight } from "lucide-react";
-// import { loadStripe } from "@stripe/stripe-js";
-// import axios from "../lib/axios";
+import { toast } from "react-hot-toast";
+import axios from "../lib/axios";
+import { load } from "@cashfreepayments/cashfree-js"; // ✅ Modern SDK
 
-/*
-const stripePromise = loadStripe(
-	"pk_test_51KZYccCoOZF2UhtOwdXQl3vcizup20zqKqT9hVUIsVzsdBrhqbUI2fE0ZdEVLdZfeHjeyFXtqaNsyCJCmZWnjNZa00PzMAjlcL"
-);
-*/
 
 const OrderSummary = () => {
 	
-    const { total, subtotal } = useCartStore();
+    const { total, subtotal, coupon, cart } = useCartStore();
 
 	const savings = subtotal - total;
 	const formattedSubtotal = subtotal.toFixed(2);
 	const formattedTotal = total.toFixed(2);
 	const formattedSavings = savings.toFixed(2);
-/*
-	const handlePayment = async () => {
-		const stripe = await stripePromise;
-		const res = await axios.post("/payments/create-checkout-session", {
-			products: cart,
-			couponCode: coupon ? coupon.code : null,
-		});
 
-		const session = res.data;
-		const result = await stripe.redirectToCheckout({
-			sessionId: session.id,
-		});
+	const [cashfree, setCashfree] = useState(null);
 
-		if (result.error) {
-			console.error("Error:", result.error);
+	// ✅ Load the SDK once on mount
+	useEffect(() => {
+		async function initCashfree() {
+			try {
+				const cf = await load({ mode: "sandbox" }); // or "production"
+				setCashfree(cf);
+			} catch (error) {
+				console.error("Cashfree SDK load failed", error);
+				toast.error("Payment system unavailable.");
+			}
+		}
+		initCashfree();
+	}, []);
+
+	const handleCashfreePayment = async () => {
+		try {
+			const res = await axios.post("/payments/create-cashfree-order", {
+				products: cart,
+				couponCode: coupon ? coupon.code : null,
+			});
+
+			const data = res.data; // ✅ FIXED
+			console.log("Cashfree response:", data);
+
+			
+			if (data.sessionId && cashfree) {
+				cashfree.checkout({
+					paymentSessionId: data.sessionId,
+					redirectTarget: "_self",
+				});
+			} else {
+				toast.error("Payment initiation failed.");
+			}
+			
+		} catch (err) {
+			console.error("Payment error:", err);
+			toast.error("Unexpected payment error.");
 		}
 	};
-*/
+
+	
+
+	
 	return (
 		<motion.div
 			className='space-y-4 rounded-lg border border-gray-700 bg-gray-800 p-4 shadow-sm sm:p-6'
@@ -77,7 +105,7 @@ const OrderSummary = () => {
                      text-white hover:bg-emerald-700 focus:outline-none focus:ring-4 focus:ring-emerald-300'
 					whileHover={{ scale: 1.05 }}
 					whileTap={{ scale: 0.95 }}
-					//onClick={handlePayment}
+					onClick={handleCashfreePayment}
 				>
 					Proceed to Checkout
 				</motion.button>
