@@ -25,7 +25,7 @@ dotenv.config(); // to access the .env file
 
 // STARTING THE SERVER & CONNECTING TO THE DATABASE
 
-const PORT = process.env.PORT; // to access the port from the .env file
+const PORT = process.env.PORT || 5000 ; // to access the port from the .env file
 
 const app = express();
 
@@ -39,9 +39,12 @@ app.listen(PORT, () => {
 import cors from "cors";
 
 // ✅ Apply CORS First
+
+const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:3000";
+
 app.use(
   cors({
-    origin: "http://localhost:3000",
+    origin: FRONTEND_URL,
     credentials: true,
   })
 );
@@ -619,7 +622,7 @@ app.post("/api/payments/create-cashfree-order", protectRoute, async (req, res) =
 					customer_phone: user.phone || "7099452646", // Fallback phone number
 				},
 				order_meta: {
-					return_url: `http://localhost:3000/purchase-result?order_id=${orderId}&coupon=${couponCode || ''}`,
+					return_url: `${FRONTEND_URL}/purchase-result?order_id=${orderId}&coupon=${couponCode || ''}`,
 				},
 			},
 			{
