@@ -102,8 +102,7 @@ const PurchaseResultPage = () => {
     // isProcessing ensures the effect runs when the processing state changes, allowing us to halt the API call if processing is no longer needed using ... if (isCartLoaded && isProcessing) {
 	//  We also include cart because the axios.post call directly uses the cart data. If, in a more complex scenario, cart could change again after being initially loaded (e.g., if a user updated their cart items on a different tab, though less likely for a success page), this dependency would ensure the effect re-runs with the latest cart data.
 	
-    // Cleanup effect for Strict Mode (optional but good practice for useEffects that run once)
-    // This isn't strictly necessary for the useRef approach, but good habit for "run once" effects.
+    
     useEffect(() => {
         return () => {
             // Reset the ref if component unmounts to allow re-run if it remounts (e.g., dev hot reload)
@@ -115,7 +114,7 @@ const PurchaseResultPage = () => {
 
     if (isProcessing) {
         return (
-            <div className="flex flex-col items-center justify-center min-h-screen text-lg bg-gray-900 text-white">
+            <div className="flex flex-col items-center justify-center min-h-screen text-lg text-white">
                 <p>Processing your payment...</p>
                 <HandHeart className="w-16 h-16 animate-bounce mt-4 text-primary" />
             </div>
@@ -125,7 +124,7 @@ const PurchaseResultPage = () => {
 
 	if (error || !isPaymentSuccess) { // If there's an error OR payment was not successful
         return (
-            <div className='min-h-screen flex items-center justify-center px-4'>
+        <div className='min-h-screen flex items-center justify-center px-4'>
 			<motion.div
 				initial={{ opacity: 0, y: 20 }}
 				animate={{ opacity: 1, y: 0 }}

@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
-// import axios from "../lib/axios"; // not yet written the axios instance
+ import axios from "../lib/axios"; 
 import { Users, Package, ShoppingCart, IndianRupeeIcon } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 
@@ -30,21 +30,18 @@ const AnalyticsTab = () => {
 
 
 
-	const [analyticsData, setAnalyticsData] = useState({
-		users: 0,
-		products: 0,
-		totalSales: 0,
-		totalRevenue: 0,
-	});
+	const [analyticsData, setAnalyticsData] = useState([]);
 	const [isLoading, setIsLoading] = useState(true);
 	const [dailySalesData, setDailySalesData] = useState([]);
 
 	useEffect(() => {
 		const fetchAnalyticsData = async () => {
 			try {
-				// const response = await axios.get("/analytics");
+				const response = await axios.get("/analytics");
 				setAnalyticsData(response.data.analyticsData);
 				setDailySalesData(response.data.dailySalesData);
+				console.log("Analytics data fetched:", response.data.analyticsData);
+				console.log("Daily sales data:", response.data.dailySalesData);
 			} catch (error) {
 				console.error("Error fetching analytics data:", error);
 			} finally {
@@ -53,6 +50,8 @@ const AnalyticsTab = () => {
 		};
 
 		fetchAnalyticsData();
+
+		
 	}, []);
 
 	if (isLoading) {
@@ -64,25 +63,25 @@ const AnalyticsTab = () => {
 			<div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8'>
 				<AnalyticsCard
 					title='Total Users'
-					value={analyticsData.users.toLocaleString()}
+					value={(analyticsData.users || 0).toLocaleString()}
 					icon={Users}
 					color='from-emerald-500 to-teal-700'
 				/>
 				<AnalyticsCard
 					title='Total Products'
-					value={analyticsData.products.toLocaleString()}
+					value={(analyticsData.products || 0).toLocaleString()}
 					icon={Package}
 					color='from-emerald-500 to-green-700'
 				/>
 				<AnalyticsCard
 					title='Total Sales'
-					value={analyticsData.totalSales.toLocaleString()}
+					value={(analyticsData.total_Sales || 0).toLocaleString()}
 					icon={ShoppingCart}
 					color='from-emerald-500 to-cyan-700'
 				/>
 				<AnalyticsCard
 					title='Total Revenue'
-					value={`₹${analyticsData.totalRevenue.toLocaleString()}`}
+					value={`₹${(analyticsData.total_Revenue || 0).toLocaleString()}`}
 					icon={IndianRupeeIcon}
 					color='from-emerald-500 to-lime-700'
 				/>
@@ -105,7 +104,7 @@ const AnalyticsTab = () => {
 							yAxisId='left'
 							type='monotone'
 							dataKey='sales'
-							stroke='#10B981'
+							stroke='#F472B6'
 							activeDot={{ r: 8 }}
 							name='Sales'
 						/>
@@ -113,7 +112,7 @@ const AnalyticsTab = () => {
 							yAxisId='right'
 							type='monotone'
 							dataKey='revenue'
-							stroke='#3B82F6'
+							stroke='#FACC15'
 							activeDot={{ r: 8 }}
 							name='Revenue'
 						/>
