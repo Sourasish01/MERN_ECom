@@ -10,8 +10,6 @@ import Coupon from "./models/coupon.model.js";
 import Order from "./models/order.model.js";
 import cloudinary from "./lib/cloudinary.js";
 
-
-
 import { connectDB } from "./lib/db.js";
 import { generateToken } from "./config/utils.js";
 import { redis } from "./lib/redis.js";
