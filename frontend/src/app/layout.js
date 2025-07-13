@@ -30,6 +30,7 @@ export default function RootLayout({ children }) {
           </div>
         </div>
 
+
         <div className="relative z-50 pt-20">
           <AuthHydration />
           <Navbar />
