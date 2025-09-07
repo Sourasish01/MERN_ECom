@@ -23,6 +23,8 @@ async function deleteProductHandler(request, context) {
             return NextResponse.json({ message: "Product not found" }, { status: 404 });
         }
 
+        
+
         // 2. If product has an image, delete it from Cloudinary
         if (product.image) {
             // Extract public ID from the Cloudinary URL
