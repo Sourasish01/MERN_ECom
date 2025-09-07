@@ -10,8 +10,11 @@ connectDB();
 
 async function deleteProductHandler(request, context) { 
     try {
-        const { id } = await context.params; // Extract the product ID from the dynamic route parameter
+        // const { id } = await context.params; // Extract the product ID from the dynamic route parameter
         // id is taken from the URL, e.g., /api/products/12345
+
+        const { id } = context.params; // Extract the product ID from the dynamic route parameter ..corrected
+         // ✅ No await
 
         // 1. Find the product by ID
         const product = await Product.findById(id);
